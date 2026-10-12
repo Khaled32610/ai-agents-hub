@@ -1,0 +1,23 @@
+services:
+  n8n:
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    image: n8nio/n8n:latest
+    container_name: ai_agents_n8n
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5678:5678"
+    environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=${N8N_WEBHOOK_URL:-http://localhost:5678/}
+      - GENERIC_TIMEZONE=Africa/Cairo
+      - N8N_RESTRICT_FILE_ACCESS_TO=/home/node/invoices_inbox
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./n8n/workflows:/home/node/workflows:ro
+      - ./invoices_inbox:/home/node/invoices_inbox
+
+volumes:
+  n8n_data:

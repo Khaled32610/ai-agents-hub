@@ -1,0 +1,368 @@
+{
+  "name": "Web Research",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8000/research/run",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"query\": {{ JSON.stringify($json['الموضوع']) }},\n  \"max_results\": 5,\n  \"export_format\": {{ JSON.stringify($json['صيغة التقرير']) }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -80,
+        0
+      ],
+      "id": "af73ac2c-b6d8-4bf0-9317-a3bba80bbbe0",
+      "name": "HTTP Request",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "url": "http://host.docker.internal:8000/research/report",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "path",
+              "value": "={{ $json.report_paths }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        784,
+        0
+      ],
+      "id": "1460b2f9-beb7-45e0-9f0f-250466ae59b8",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('On form submission').item.json['البريد الإلكتروني لاستلام التقرير'] }}",
+        "subject": "=تقرير بحث جاهز: {{$('On form submission').item.json['الموضوع']}}",
+        "message": "تقرير البحث جاهز، تلاقيه مرفق مع الإيميل ده.  عدد المقالات: {{ $('HTTP Request').item.json.articles_count }}",
+        "options": {
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {}
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1008,
+        -96
+      ],
+      "id": "a1a7ea78-a8ee-4dbc-b941-dead445f848d",
+      "name": "Send a message"
+    },
+    {
+      "parameters": {
+        "name": "={{ $json.report_paths.split('/').pop() }}",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "REPLACE_WITH_FOLDER_ID",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1008,
+        80
+      ],
+      "id": "75ff8454-22e3-4007-839d-c926b574e40a",
+      "name": "Upload file"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "report_paths",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        592,
+        -96
+      ],
+      "id": "0d4b0b8f-9caa-4bfc-9d6e-50fd8b766bdd",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "eaca31b0-e30a-4594-a5e1-8bab8fd8d6da",
+              "leftValue": "={{ $json.error.message }}",
+              "rightValue": "response_language",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        80,
+        160
+      ],
+      "id": "43296088-f5e0-4cab-9aa3-e5173d421d45",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "الموضوع مكتوب بالعربي والإنجليزي مع بعض — تحب الرد يطلع بأنهي لغة؟",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "English"
+                  },
+                  {
+                    "option": "عربي"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        240,
+        16
+      ],
+      "id": "e4c1811b-898a-419e-9070-b86f6a9e8832",
+      "name": "Form"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8000/research/run",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"query\": {{ JSON.stringify($('On form submission').item.json['الموضوع']) }},\n  \"max_results\": 5,\n  \"export_format\": {{ JSON.stringify($('On form submission').item.json['صيغة التقرير']) }},\n  \"response_language\": {{ $json['الموضوع مكتوب بالعربي والإنجليزي مع بعض — تحب الرد يطلع بأنهي لغة؟'] === 'عربي' ? '\"ar\"' : '\"en\"' }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        432,
+        32
+      ],
+      "id": "edaa7d35-94bf-44ed-8b32-413bee2c0c04",
+      "name": "HTTP Request2",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('On form submission').item.json['البريد الإلكتروني لاستلام التقرير'] }}",
+        "subject": "Error ",
+        "message": "There is an error happened while we were excuting your request",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1024,
+        272
+      ],
+      "id": "8fbd0b96-2a59-4a39-adbb-09b6b4b07416",
+      "name": "Send a message1"
+    },
+    {
+      "parameters": {
+        "formTitle": "طلب تقرير بحث",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "الموضوع",
+              "fieldType": "textarea"
+            },
+            {
+              "fieldLabel": "صيغة التقرير",
+              "fieldType": "checkbox",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "markdown"
+                  },
+                  {
+                    "option": "pdf"
+                  },
+                  {
+                    "option": "html"
+                  }
+                ]
+              }
+            },
+            {
+              "fieldLabel": "البريد الإلكتروني لاستلام التقرير",
+              "fieldType": "email",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        -352,
+        0
+      ],
+      "id": "dad69aa9-1c3f-40f8-a743-1d798b610a24",
+      "name": "On form submission"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Upload file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Form",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Form": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "nodeGroups": []
+}

@@ -1,0 +1,35 @@
+# Local configuration and private data
+.env
+.env.*
+!.env.example
+secrets/
+*.pem
+*.key
+*.p12
+*credentials*.json
+*service-account*.json
+invoices_inbox/
+reports/
+logs/
+*.db
+*.sqlite*
+*.zip
+*.tar*
+# Environments and generated files
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+build/
+dist/
+models/
+.cache/
+.idea/
+.vscode/
+.DS_Store
+.git/
+tests/
